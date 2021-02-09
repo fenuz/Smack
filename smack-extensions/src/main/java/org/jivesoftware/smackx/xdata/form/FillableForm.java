@@ -256,11 +256,15 @@ public class FillableForm extends FilledForm {
         if (!missingRequiredFields.isEmpty()) {
             throw new IllegalStateException("Not all required fields filled. Missing: " + missingRequiredFields);
         }
-        DataForm dataFormToSend = DataForm.builder()
-                        .addField(formTypeFormField)
-                        .addFields(filledFields.values())
-                        .build();
-        return dataFormToSend;
+
+        DataForm.Builder builder = DataForm.builder()
+                .addFields(filledFields.values());
+
+        if (formTypeFormField != null) {
+            builder.addField(formTypeFormField);
+        }
+
+        return builder.build();
     }
 
 }

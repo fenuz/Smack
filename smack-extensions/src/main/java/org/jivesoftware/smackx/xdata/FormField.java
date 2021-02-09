@@ -511,18 +511,23 @@ public abstract class FormField implements FullyQualifiedElement {
         return field;
     }
 
-    public TextSingleFormField asHiddenFormTypeFieldIfPossible() {
+    public TextSingleFormField asFormTypeFieldIfPossible() {
         TextSingleFormField textSingleFormField = ifPossibleAs(TextSingleFormField.class);
         if (textSingleFormField == null) {
             return null;
         }
-        if (getType() != Type.hidden) {
-            return null;
-        }
-        if (!getFieldName().equals(FORM_TYPE)) {
+        if (!FORM_TYPE.equals(getFieldName())) {
             return null;
         }
         return textSingleFormField;
+    }
+
+    public TextSingleFormField asHiddenFormTypeFieldIfPossible() {
+        if (getType() != Type.hidden) {
+            return null;
+        }
+
+        return  asFormTypeFieldIfPossible();
     }
 
     public abstract static class Builder<F extends FormField, B extends Builder<?, ?>> {

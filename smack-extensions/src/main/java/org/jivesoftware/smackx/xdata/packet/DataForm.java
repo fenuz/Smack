@@ -104,8 +104,8 @@ public final class DataForm implements ExtensionElement {
         fieldsMap = CollectionUtil.cloneAndSeal(builder.fieldsMap);
         extensionElements = CollectionUtil.cloneAndSeal(builder.extensionElements);
 
-        // Ensure that the types of the form fields of every data form is known by registering such fields.
-        if (type == Type.form) {
+        // Ensure that the types of the form fields of data forms with a FORM_TYPE are known by registering such fields.
+        if (type == Type.form && hasFormTypeField()) {
             FormFieldRegistry.register(this);
         }
     }
@@ -212,7 +212,7 @@ public final class DataForm implements ExtensionElement {
      * @since 4.4.0
      */
     public String getFormType() {
-        FormField formTypeField = getHiddenFormTypeField();
+        FormField formTypeField = getFormTypeField();
         if (formTypeField == null) {
             return null;
         }
@@ -220,27 +220,36 @@ public final class DataForm implements ExtensionElement {
     }
 
     /**
-     * Returns the hidden FORM_TYPE field or null if this data form has none.
+     * Returns the FORM_TYPE field or null if this data form has none. Note that the field is only considered the
+     * FORM_TYPE field when its also hidden or the DataForm type is submit.
      *
-     * @return the hidden FORM_TYPE field or null.
+     * When this form is type submit, no check is done on the FORM_TYPE field type, for other data form types it is
+     * required that the field type is hidden.
+     *
+     * @return the FORM_TYPE field or null.
      * @since 4.1
      */
-    public TextSingleFormField getHiddenFormTypeField() {
+    public TextSingleFormField getFormTypeField() {
         FormField field = getField(FormField.FORM_TYPE);
         if (field == null) {
             return null;
         }
-        return field.asHiddenFormTypeFieldIfPossible();
+        if (getType() == Type.submit) {
+            return field.asFormTypeFieldIfPossible();
+        } else {
+            return field.asHiddenFormTypeFieldIfPossible();
+        }
     }
 
     /**
-     * Returns true if this DataForm has at least one FORM_TYPE field which is
-     * hidden. This method is used for sanity checks.
+     * Returns true if this DataForm has at least one FORM_TYPE field. Note that the field is only considered the
+     * FORM_TYPE field when its also hidden or the DataForm type is submit.
+     * This method is used for sanity checks.
      *
      * @return true if there is at least one field which is hidden.
      */
-    public boolean hasHiddenFormTypeField() {
-        return getHiddenFormTypeField() != null;
+    public boolean hasFormTypeField() {
+        return getFormTypeField() != null;
     }
 
     @Override

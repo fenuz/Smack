@@ -579,7 +579,7 @@ public final class EntityCapsManager extends Manager {
         Set<String> foundFormTypes = new HashSet<>();
         List<DataForm> dataForms = info.getExtensions(DataForm.class);
         for (DataForm dataForm : dataForms) {
-            FormField formFieldTypeField = dataForm.getHiddenFormTypeField();
+            FormField formFieldTypeField = dataForm.getFormTypeField();
             if (formFieldTypeField == null) {
                 continue;
             }
@@ -665,7 +665,7 @@ public final class EntityCapsManager extends Manager {
 
         List<DataForm> extendedInfos = discoverInfo.getExtensions(DataForm.class);
         for (DataForm extendedInfo : extendedInfos) {
-            if (!extendedInfo.hasHiddenFormTypeField()) {
+            if (!extendedInfo.hasFormTypeField()) {
                 // Only use the data form for calculation is it has a hidden FORM_TYPE field.
                 // See XEP-0115 5.4 step 3.f
                 continue;

@@ -90,12 +90,13 @@ public class DataFormProvider extends ExtensionElementProvider<DataForm> {
                     // to lookup form field types of fields under <item/>.
                     FormField formField = parseField(parser, elementXmlEnvironment, formType);
 
-                    TextSingleFormField hiddenFormTypeField = formField.asHiddenFormTypeFieldIfPossible();
-                    if (hiddenFormTypeField != null) {
+                    TextSingleFormField formTypeField = formField.asFormTypeFieldIfPossible();
+                    // A FORM_TYPE field must have type hidden on form and result forms, but can be without type for submit forms
+                    if (formTypeField != null && (dataFormType == DataForm.Type.submit || formField.getType() == FormField.Type.hidden)) {
                         if (formType != null) {
                             throw new SmackParsingException("Multiple hidden form type fields");
                         }
-                        formType = hiddenFormTypeField.getValue();
+                        formType = formTypeField.getValue();
                     }
 
                     dataForm.addField(formField);
@@ -206,16 +207,19 @@ public class DataFormProvider extends ExtensionElementProvider<DataForm> {
             }
         }
 
-        if (type == null) {
+        if (type == null && formType != null) {
             // If no field type was explicitly provided, then we need to lookup the
             // field's type in the registry.
             type = FormFieldRegistry.lookup(formType, fieldName);
             if (type == null) {
                 LOGGER.warning("The Field '" + fieldName + "' from FORM_TYPE '" + formType
                                 + "' is not registered. Field type is unknown, assuming text-single.");
-                // As per XEP-0004, text-single is the default form field type, which we use as emergency fallback here.
-                type = FormField.Type.text_single;
             }
+        }
+
+        if (type == null) {
+            // As per XEP-0004, text-single is the default form field type.
+            type = FormField.Type.text_single;
         }
 
         FormField.Builder<?, ?> builder;

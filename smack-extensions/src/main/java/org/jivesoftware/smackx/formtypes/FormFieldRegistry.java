@@ -19,8 +19,6 @@ package org.jivesoftware.smackx.formtypes;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.jivesoftware.smack.util.Objects;
-
 import org.jivesoftware.smackx.xdata.FormField;
 import org.jivesoftware.smackx.xdata.TextSingleFormField;
 import org.jivesoftware.smackx.xdata.packet.DataForm;
@@ -29,30 +27,27 @@ public class FormFieldRegistry {
 
     private static final Map<String, Map<String, FormField.Type>> REGISTRY = new HashMap<>();
 
-    private static final Map<String, FormField.Type> LOOKASIDE_REGISTRY = new HashMap<>();
-
-    private static final Map<String, String> FIELD_NAME_TO_FORM_TYPE = new HashMap<>();
-
-    static {
-        register(FormField.FORM_TYPE, FormField.Type.hidden);
-    }
-
     @SuppressWarnings("ReferenceEquality")
     public static synchronized void register(DataForm dataForm) {
         // TODO: Also allow forms of type 'result'?
         if (dataForm.getType() != DataForm.Type.form) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Only forms with type 'form' can be registered");
         }
 
         String formType = null;
-        TextSingleFormField hiddenFormTypeField = dataForm.getHiddenFormTypeField();
-        if (hiddenFormTypeField != null) {
-            formType = hiddenFormTypeField.getValue();
+        TextSingleFormField formTypeField = dataForm.getFormTypeField();
+        if (formTypeField != null) {
+            formType = formTypeField.getValue();
+        }
+
+        if (formType == null) {
+            // no FORM_TYPE is set to this dataform, we cannot register its fields.
+            return;
         }
 
         for (FormField formField : dataForm.getFields()) {
             // Note that we can compare here by reference equality to skip the hidden form type field.
-            if (formField == hiddenFormTypeField) {
+            if (formField == formTypeField) {
                 continue;
             }
 
@@ -64,22 +59,7 @@ public class FormFieldRegistry {
 
     public static synchronized void register(String formType, String fieldName, FormField.Type type) {
         if (formType == null) {
-            FormFieldInformation formFieldInformation = lookup(fieldName);
-            if (formFieldInformation != null) {
-                if (Objects.equals(formType, formFieldInformation.formType)
-                                && type.equals(formFieldInformation.formFieldType)) {
-                    // The field is already registered, nothing to do here.
-                    return;
-                }
-
-                String message = "There is already a field with the name'" + fieldName
-                                + "' registered with the field type '" + formFieldInformation.formFieldType
-                                + "', while this tries to register the field with the type '" + type + '\'';
-                throw new IllegalArgumentException(message);
-            }
-
-            LOOKASIDE_REGISTRY.put(fieldName, type);
-            return;
+            throw new IllegalArgumentException("Cannot register a field without a FORM_TYPE");
         }
 
         Map<String, FormField.Type> fieldNameToType = REGISTRY.get(formType);
@@ -93,66 +73,17 @@ public class FormFieldRegistry {
             }
         }
         fieldNameToType.put(fieldName, type);
-
-        FIELD_NAME_TO_FORM_TYPE.put(fieldName, formType);
-    }
-
-    public static synchronized void register(String fieldName, FormField.Type type) {
-        FormField.Type previousType = LOOKASIDE_REGISTRY.get(fieldName);
-        if (previousType != null) {
-            if (previousType == type) {
-                // Nothing to do here.
-                return;
-            }
-            throw new IllegalArgumentException("There is already a field with the name '" + fieldName
-                            + "' registered with type " + previousType
-                            + ", while trying to register this field with type '" + type + "'");
-        }
-
-        LOOKASIDE_REGISTRY.put(fieldName, type);
     }
 
     public static synchronized FormField.Type lookup(String formType, String fieldName) {
-        if (formType != null) {
-            Map<String, FormField.Type> fieldNameToTypeMap = REGISTRY.get(formType);
-            if (fieldNameToTypeMap != null) {
-                FormField.Type type = fieldNameToTypeMap.get(fieldName);
-                if (type != null) {
-                    return type;
-                }
-            }
-        } else {
-            formType = FIELD_NAME_TO_FORM_TYPE.get(fieldName);
-            if (formType != null) {
-                FormField.Type type = lookup(formType, fieldName);
-                if (type != null) {
-                    return type;
-                }
-            }
+        if (formType == null) {
+            throw new IllegalArgumentException("Cannot lookup a field type without a FORM_TYPE");
+        }
+        Map<String, FormField.Type> fieldNameToTypeMap = REGISTRY.get(formType);
+        if (fieldNameToTypeMap != null) {
+            return fieldNameToTypeMap.get(fieldName);
         }
 
-        // Fallback to lookaside registry.
-        return LOOKASIDE_REGISTRY.get(fieldName);
-    }
-
-    public static synchronized FormFieldInformation lookup(String fieldName) {
-        String formType = FIELD_NAME_TO_FORM_TYPE.get(fieldName);
-        FormField.Type type = lookup(formType, fieldName);
-        if (type == null) {
-            return null;
-        }
-
-        return new FormFieldInformation(type, formType);
-    }
-
-    public static final class FormFieldInformation {
-        public final FormField.Type formFieldType;
-        public final String formType;
-
-
-        private FormFieldInformation(FormField.Type formFieldType, String formType) {
-            this.formFieldType = formFieldType;
-            this.formType = formType;
-        }
+        return null;
     }
 }
