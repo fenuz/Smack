@@ -210,7 +210,7 @@ public class DataFormProvider extends ExtensionElementProvider<DataForm> {
             // The field name 'FORM_TYPE' is magic.
             if (fieldName.equals(FormField.FORM_TYPE)) {
                 type = FormField.Type.hidden;
-            } else {
+            } else if (formType != null) {
                 // If no field type was explicitly provided, then we need to lookup the
                 // field's type in the registry.
                 type = FormFieldRegistry.lookup(formType, fieldName);
@@ -220,6 +220,9 @@ public class DataFormProvider extends ExtensionElementProvider<DataForm> {
                     // As per XEP-0004, text-single is the default form field type, which we use as emergency fallback here.
                     type = FormField.Type.text_single;
                 }
+            } else {
+               // As per XEP-0004, text-single is the default form field type
+               type = FormField.Type.text_single;
             }
         }
 

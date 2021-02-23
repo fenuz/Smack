@@ -27,8 +27,6 @@ public class FormFieldRegistry {
 
     private static final Map<String, Map<String, FormField.Type>> REGISTRY = new HashMap<>();
 
-    private static final Map<String, String> FIELD_NAME_TO_FORM_TYPE = new HashMap<>();
-
     @SuppressWarnings("ReferenceEquality")
     public static synchronized void register(DataForm dataForm) {
         // TODO: Also allow forms of type 'result'?
@@ -66,19 +64,11 @@ public class FormFieldRegistry {
             }
         }
         fieldNameToType.put(fieldName, type);
-
-        FIELD_NAME_TO_FORM_TYPE.put(fieldName, formType);
     }
 
     public static synchronized FormField.Type lookup(String formType, String fieldName) {
         if (formType == null) {
-            formType = FIELD_NAME_TO_FORM_TYPE.get(fieldName);
-            if (formType != null) {
-                FormField.Type type = lookup(formType, fieldName);
-                if (type != null) {
-                    return type;
-                }
-            }
+            throw new IllegalArgumentException("cannot lookup a field type without a formType");
         }
 
         Map<String, FormField.Type> fieldNameToTypeMap = REGISTRY.get(formType);
@@ -90,16 +80,6 @@ public class FormFieldRegistry {
         }
 
         return null;
-    }
-
-    public static synchronized FormFieldInformation lookup(String fieldName) {
-        String formType = FIELD_NAME_TO_FORM_TYPE.get(fieldName);
-        FormField.Type type = lookup(formType, fieldName);
-        if (type == null) {
-            return null;
-        }
-
-        return new FormFieldInformation(type, formType);
     }
 
     public static final class FormFieldInformation {
